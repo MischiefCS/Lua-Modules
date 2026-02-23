@@ -62,8 +62,8 @@ function MvpTable.run(args)
 		title = String.nilIfEmpty(args.title),
 		columns = {
 			{align = 'left'},
-			{align = 'center'},
-			parsedArgs.points and {align = 'center'} or nil,
+			{align = 'right'},
+			parsedArgs.points and {align = 'right'} or nil,
 		},
 		css = {
 			['margin-top'] = parsedArgs.margin .. 'px'

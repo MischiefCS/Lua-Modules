@@ -246,6 +246,8 @@ return {
 	share = 'fas fa-share-alt',
 	copy = 'fas fa-clone',
 	download = 'fas fa-download',
+
+	-- Usage: CounterStrike VRS
 	github = 'fab fa-github',
 
 	-- Usage: Dota2 Spellcard

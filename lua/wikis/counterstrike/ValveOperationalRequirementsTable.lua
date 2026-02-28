@@ -15,7 +15,6 @@ local String = require('Module:StringUtils')
 local Table = require('Module:Table')
 local Variables = require('Module:Variables')
 
-local Widgets = Lua.import('Module:Widget/All')
 local WidgetsHtml = Lua.import('Module:Widget/Html/All')
 local IconFa = Lua.import('Module:Widget/Image/Icon/Fontawesome')
 local Link = Lua.import('Module:Widget/Basic/Link')
@@ -25,7 +24,6 @@ local CollapsibleToggle = Lua.import('Module:Widget/GeneralCollapsible/Toggle')
 
 local TableWidgets = Lua.import('Module:Widget/Table2/All')
 local Div = WidgetsHtml.Div
-local Span = WidgetsHtml.Span
 local Abbr = WidgetsHtml.Abbr
 local Hr = WidgetsHtml.Hr
 
@@ -217,7 +215,6 @@ function ValveOperationalRequirementsTable._makeVrsLink(filePrefix, date)
 	if Logic.isEmpty(date) then
 		return VRS_GITHUB_URL_BASE
 	end
-	
 	local iso = DateExt.toYmdInUtc(date)
 	local dateParams = DateExt.parseIsoDate(iso) --[[@as osdateparam]]
 	return VRS_GITHUB_URL_BASE .. String.interpolate(VRS_GITHUB_URL_TEMPLATE, {

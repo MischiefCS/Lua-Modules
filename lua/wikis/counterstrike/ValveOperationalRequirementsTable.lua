@@ -5,22 +5,25 @@
 -- Please see https://github.com/Liquipedia/Lua-Modules to contribute
 --
 
-local Arguments = require('Module:Arguments')
-local Array = require('Module:Array')
-local DateExt = require('Module:Date/Ext')
-local Json = require('Module:Json')
-local Logic = require('Module:Logic')
 local Lua = require('Module:Lua')
-local String = require('Module:StringUtils')
-local Table = require('Module:Table')
-local Variables = require('Module:Variables')
 
+local Arguments = Lua.import('Module:Arguments')
+local Array = Lua.import('Module:Array')
+local DateExt = Lua.import('Module:Date/Ext')
+local Json = Lua.import('Module:Json')
+local Logic = Lua.import('Module:Logic')
+local Lpdb = Lua.import('Module:Lpdb')
+local String = Lua.import('Module:StringUtils')
+local Table = Lua.import('Module:Table')
+local Variables = Lua.import('Module:Variables')
+
+local Widgets = Lua.import('Module:Widget/All')
 local WidgetsHtml = Lua.import('Module:Widget/Html/All')
 local IconFa = Lua.import('Module:Widget/Image/Icon/Fontawesome')
 local Link = Lua.import('Module:Widget/Basic/Link')
-local Lpdb = Lua.import('Module:Lpdb')
 local Collapsible = Lua.import('Module:Widget/GeneralCollapsible/Default')
 local CollapsibleToggle = Lua.import('Module:Widget/GeneralCollapsible/Toggle')
+local WidgetUtil = Lua.import('Module:Widget/Util')
 
 local TableWidgets = Lua.import('Module:Widget/Table2/All')
 local Div = WidgetsHtml.Div
@@ -102,39 +105,45 @@ function ValveOperationalRequirementsTable.make(frame)
 	local vrsDisplay = ValveOperationalRequirementsTable._makeVrsDisplay(data.vrsData)
 	local explicitSeedingDate = data.vrsData.date ~= data.seedingData.date
 
-	local rows = {
-		ValveOperationalRequirementsTable._makeTableRow({
+	local rows = WidgetUtil.collect(
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = 'Announcement Date',
-			contents = data.announcement.date,
+			contents = data.announcement.date and DateExt.formatTimestamp('M j, Y', data.announcement.date) or nil,
 			link = data.announcement.ref,
 			linkType = 'ref'
-		}),
+		},
 		Row{
 			children = {
 				CellHeader{children = {'Additional Information'}},
-				Cell{children = Logic.emptyOr(Array.interleave(additionalInfoValues, Hr{}), {DEFAULT_VALUE})},
+				Cell{children = Logic.emptyOr(Array.interleave(additionalInfoValues, Hr{}), DEFAULT_VALUE)},
 				Cell{children = Array.interleave(additionalInfoRefs, Hr{})},
 			}
 		},
-		ValveOperationalRequirementsTable._makeTableRow({
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = 'Invite Date',
-			contents = data.inviteDate.date and DateExt.toYmdInUtc(data.inviteDate.date) or nil,
+			contents = data.inviteDate.date and DateExt.formatTimestamp('M j, Y', data.inviteDate.date) or nil,
 			link = data.inviteDate.ref,
 			linkType = 'ref'
-		}),
-		ValveOperationalRequirementsTable._makeTableRow({
+		},
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = 'VRS Region/Filtering',
 			contents = vrsDisplay,
 			link = data.vrsData.ref,
 			linkType = 'ref'
-		}),
-		ValveOperationalRequirementsTable._makeTableRow({
+		},
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = explicitSeedingDate and 'Invitational VRS' or 'Applicable VRS',
-			contents = data.vrsData.date and DateExt.toYmdInUtc(data.vrsData.date) or nil,
+			contents = data.vrsData.date and DateExt.formatTimestamp('M j, Y', data.vrsData.date) or nil,
 			link = data.vrsData.link,
 			linkType = 'github'
-		}),
-		ValveOperationalRequirementsTable._makeTableRow({
+		},
+		explicitSeedingDate and ValveOperationalRequirementsTable._makeTableRow{
+			title = 'Seeding VRS',
+			contents = data.seedingData.date and DateExt.formatTimestamp('M j, Y', data.seedingData.date) or nil,
+			link = data.seedingData.link,
+			linkType = 'github'
+		} or nil,
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = WidgetsHtml.Fragment{children = {
 				'Applicable ',
 				Abbr{children = 'TOR', title = 'Tournament Operating Requirements'}
@@ -142,35 +151,25 @@ function ValveOperationalRequirementsTable.make(frame)
 			contents = ValveOperationalRequirementsTable._makeTorDisplay(data.torVersion.commit),
 			link = data.torVersion.link,
 			linkType = 'github'
-		}),
-		ValveOperationalRequirementsTable._makeTableRow({
+		},
+		ValveOperationalRequirementsTable._makeTableRow{
 			title = 'Exceptions',
 			contents = ValveOperationalRequirementsTable._makeExceptionsExpansion(data.exceptions.html),
 			link = data.exceptions.link,
 			linkType = 'github'
-		}),
+		},
 		Row{
 			children = {
 				CellHeader{children = {'Tournament Type'}},
 				CellHeader{children = {data.tier or 'Unknown'}, attributes = {colspan = 2}}
 			}
 		}
-	}
-
-	if explicitSeedingDate then
-		table.insert(rows, 6, ValveOperationalRequirementsTable._makeTableRow({
-			title = 'Seeding VRS',
-			contents = data.seedingData.date and DateExt.toYmdInUtc(data.seedingData.date) or nil,
-			link = data.seedingData.link,
-			linkType = 'github'
-		}))
-	end
+	)
 
 	ValveOperationalRequirementsTable._storeLpdbData(data)
 
 	return Table2{
-		tableClasses = {''},
-		children = {TableBody{children = rows}},
+		children = TableBody{children = rows},
 	}
 end
 
@@ -184,28 +183,38 @@ end
 ---@return Widget
 function ValveOperationalRequirementsTable._makeTorDisplay(commit)
 	if commit == 'latest' then
-		return WidgetsHtml.I{children = {'Latest Version'}}
+		return WidgetsHtml.I{children = 'Latest Version'}
 	end
-	return WidgetsHtml.Code{children = {commit}}
+	return WidgetsHtml.Code{children = commit}
 end
 
 ---@param vrsData ValveOperationalRequirementsDataVrsData
 ---@return Renderable[]?
 function ValveOperationalRequirementsTable._makeVrsDisplay(vrsData)
-	local vrsRegion = VRS_REGIONS[vrsData.standings] or {}
+	local vrsRegion = VRS_REGIONS[vrsData.standings]
 	if Logic.isEmpty(vrsRegion) then
 		return
 	end
-	local children = {vrsRegion.displayName}
-	if Logic.isNotEmpty(vrsData.startingRank) and vrsData.startingRank ~= 1 then
-		table.insert(children, ' ')
-		table.insert(children, WidgetsHtml.I{children = {'(Starting at #' .. vrsData.startingRank .. ')'}})
-	end
-	if Logic.isNotEmpty(vrsData.filtering) then
-		table.insert(children, WidgetsHtml.Br{})
-		table.insert(children, WidgetsHtml.I{children = {'(Filtered: ' .. vrsData.filtering .. ')'}})
-	end
-	return children
+
+	return WidgetUtil.collect(
+		vrsRegion.displayName,
+		Logic.isNotEmpty(vrsData.startingRank) and vrsData.startingRank ~= 1 and {
+			' ',
+			WidgetsHtml.I{children = {
+				'(Starting at #',
+				vrsData.startingRank,
+				')'
+			}}
+		} or nil,
+		Logic.isNotEmpty(vrsData.filtering) and {
+			WidgetsHtml.Br{},
+			WidgetsHtml.I{children = {
+				'(Filtered: ',
+				vrsData.filtering,
+				')'
+			}}
+		} or nil
+	)
 end
 
 ---@param filePrefix string
@@ -215,20 +224,21 @@ function ValveOperationalRequirementsTable._makeVrsLink(filePrefix, date)
 	if Logic.isEmpty(date) then
 		return VRS_GITHUB_URL_BASE
 	end
+	
 	local iso = DateExt.toYmdInUtc(date)
 	local dateParams = DateExt.parseIsoDate(iso) --[[@as osdateparam]]
 	return VRS_GITHUB_URL_BASE .. String.interpolate(VRS_GITHUB_URL_TEMPLATE, {
 		filePrefix = filePrefix,
 		year = dateParams.year,
-		month = string.format("%02d", dateParams.month),
-		day = string.format("%02d", dateParams.day)
+		month = string.format('%02d', dateParams.month),
+		day = string.format('%02d', dateParams.day)
 	})
 end
 
 ---@param link string?
 ---@return IconFontawesomeWidget?
 function ValveOperationalRequirementsTable._makeGitHubIcon(link)
-    if Logic.isEmpty(link) then return nil end
+    if Logic.isEmpty(link) then return end
     return Link{
         children = {IconFa{iconName = 'github'}},
         linktype = 'external',
@@ -250,23 +260,28 @@ end
 ---@param rowData {title: string|Widget[], contents: string|Widget[]?, link: string?, linkType: 'ref'|'github'}
 ---@return Widget
 function ValveOperationalRequirementsTable._makeTableRow(rowData)
-	local link
-	if Logic.isNotEmpty(rowData.contents) then
-		if Logic.isNotEmpty(rowData.link) then
-			if rowData.linkType == 'github' then
-				link = ValveOperationalRequirementsTable._makeGitHubIcon(rowData.link)
-			else
-				link = ValveOperationalRequirementsTable._makeRefIcon(rowData.link)
-			end
-		elseif rowData.linkType == 'ref' then
-			link = DITTO_VALUE
+	---@return Renderable?
+	local getLink = function()
+		if Logic.isEmpty(rowData.contents) then
+			return
+		end
+		if Logic.isEmpty(rowData.link) and rowData.linkType == 'ref' then
+			return DITTO_VALUE
+		elseif Logic.isEmpty(rowData.link) then
+			return
+		end
+		if rowData.linkType == 'github' then
+			return ValveOperationalRequirementsTable._makeGitHubIcon(rowData.link)
+		else
+			return ValveOperationalRequirementsTable._makeRefIcon(rowData.link)
 		end
 	end
+
 	return Row{
 		children = {
 			CellHeader{children = rowData.title},
 			Cell{children = rowData.contents or DEFAULT_VALUE},
-			Cell{children = link},
+			Cell{children = getLink()},
 		}
 	}
 
@@ -275,19 +290,19 @@ end
 ---@param exceptions string?
 ---@return Widget?
 function ValveOperationalRequirementsTable._makeExceptionsExpansion(exceptions)
-	if Logic.nilIfEmpty(exceptions) == nil then
-		return nil
+	if not Logic.nilIfEmpty(exceptions) then
+		return
 	end
 	return Collapsible{
 		shouldCollapse = true,
 		titleWidget = Div{
 			css = {display = 'block'},
-			children = {
-				CollapsibleToggle{},
-			}
+			children = CollapsibleToggle{}
 		},
-		children = {Div{children = {exceptions}}}
+		children = exceptions
 	}
+-- if there is no need to make it left align and unbold you could just
+-- return Collapsible{children = exceptions}
 end
 
 ---@param additionalInfoJson string
@@ -304,7 +319,7 @@ function ValveOperationalRequirementsTable._parseAdditionalInfo(additionalInfoJs
 			infoItem.type .. ' is not a valid additional info type!'
 		)
 		return {
-			date = Logic.nilIfEmpty(DateExt.toYmdInUtc(infoItem.date)),
+			date = DateExt.readTimestamp(infoItem.date),
 			type = infoItem.type,
 			ref = infoItem.ref
 		}
@@ -314,28 +329,29 @@ end
 ---@param additionalInfoItem ValveOperationalRequirementsDataAdditionalInfo
 ---@return string
 function ValveOperationalRequirementsTable._makeAdditionalInfoDisplay(additionalInfoItem)
+	local date = additionalInfoItem.date and DateExt.formatTimestamp('M j, Y', additionalInfoItem.date) or ''
 	if additionalInfoItem.type == 'amendment' then
-		return 'Amended on ' .. additionalInfoItem.date
+		return 'Amended on ' .. date
 	end
-	return 'Announced on ' .. additionalInfoItem.date
+	return 'Announced on ' .. date
 end
 
 ---@param additionalInfoItem ValveOperationalRequirementsDataAdditionalInfo
----@return string?
+---@return Renderable?
 function ValveOperationalRequirementsTable._makeAdditionalInfoRef(additionalInfoItem)
-	return tostring(ValveOperationalRequirementsTable._makeRefIcon(additionalInfoItem.ref))
+	return ValveOperationalRequirementsTable._makeRefIcon(additionalInfoItem.ref)
 end
 
 ---@param args table
 ---@return ValveOperationalRequirementsData
 function ValveOperationalRequirementsTable._getData(args)
 	local vrsRegionData = VRS_REGIONS[args.vrsRegion] or {}
-	local vrsDate = Logic.isNotEmpty(args.vrsDate) and DateExt.readTimestamp(args.vrsDate) or nil
-	local seedingDate = Logic.isNotEmpty(args.seedingDate) and DateExt.readTimestamp(args.seedingDate) or vrsDate
-	local inviteDate = Logic.isNotEmpty(args.inviteDate) and DateExt.readTimestamp(args.inviteDate) or nil
+	local vrsDate = DateExt.readTimestamp(args.vrsDate)
+	local seedingDate = DateExt.readTimestamp(args.seedingDate) or vrsDate
+	local inviteDate = DateExt.readTimestamp(args.inviteDate)
 	return {
 		announcement = {
-			date = Logic.nilIfEmpty(args.announcement),
+			date = DateExt.readTimestamp(args.announcement),
 			ref = Logic.nilIfEmpty(args.announcementRef)
 		},
 		additionalInfo = ValveOperationalRequirementsTable._parseAdditionalInfo(args.additionalInfo),
@@ -346,7 +362,7 @@ function ValveOperationalRequirementsTable._getData(args)
 		vrsData = {
 			standings = vrsRegionData.name,
 			filtering = Logic.nilIfEmpty(args.vrsFilter),
-			startingRank = tonumber(Logic.emptyOr(args.vrsStartingRank, 1)),
+			startingRank = tonumber(args.vrsStartingRank) or 1,
 			date = vrsDate,
 			link = ValveOperationalRequirementsTable._makeVrsLink(vrsRegionData.githubFilePrefix, vrsDate),
 			ref = Logic.nilIfEmpty(args.vrsRef)
@@ -371,7 +387,7 @@ end
 
 ---@param data ValveOperationalRequirementsData
 function ValveOperationalRequirementsTable._storeLpdbData(data)
-	if Logic.readBool(Variables.varDefault('disable_LPDB_storage')) then
+	if Lpdb.isStorageDisabled() then
 		return
 	end
 	local tournamentParent = Variables.varDefault('tournament_parent')
@@ -386,7 +402,7 @@ function ValveOperationalRequirementsTable._storeLpdbData(data)
 		type = 'vor_data',
 		name = 'Valve Operational Requirements for ' .. tournamentName,
 		information = data.tier,
-		date = Variables.varDefault('tournament_enddate'),
+		date = DateExt.getContextualDate(),
 		extradata = data
 	}
 	dataPoint:save()

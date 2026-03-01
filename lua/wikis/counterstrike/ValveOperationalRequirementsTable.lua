@@ -172,12 +172,14 @@ function ValveOperationalRequirementsTable.make(frame)
 	}
 end
 
+---@private
 ---@param commit string?
 ---@return string
 function ValveOperationalRequirementsTable._makeTorLink(commit)
 	return String.interpolate(TOR_GITHUB_URL, {commit = Logic.emptyOr(commit, 'main')})
 end
 
+---@private
 ---@param commit string|'latest'
 ---@return Widget
 function ValveOperationalRequirementsTable._makeTorDisplay(commit)
@@ -187,6 +189,7 @@ function ValveOperationalRequirementsTable._makeTorDisplay(commit)
 	return WidgetsHtml.Code{children = commit}
 end
 
+---@private
 ---@param vrsData ValveOperationalRequirementsDataVrsData
 ---@return Renderable[]?
 function ValveOperationalRequirementsTable._makeVrsDisplay(vrsData)
@@ -216,6 +219,7 @@ function ValveOperationalRequirementsTable._makeVrsDisplay(vrsData)
 	)
 end
 
+---@private
 ---@param filePrefix string
 ---@param date string?
 ---@return string
@@ -233,6 +237,7 @@ function ValveOperationalRequirementsTable._makeVrsLink(filePrefix, date)
 	})
 end
 
+---@private
 ---@param link string?
 ---@return IconFontawesomeWidget?
 function ValveOperationalRequirementsTable._makeGitHubIcon(link)
@@ -244,6 +249,7 @@ function ValveOperationalRequirementsTable._makeGitHubIcon(link)
     }
 end
 
+---@private
 ---@param link string?
 ---@return IconFontawesomeWidget?
 function ValveOperationalRequirementsTable._makeRefIcon(link)
@@ -255,6 +261,7 @@ function ValveOperationalRequirementsTable._makeRefIcon(link)
     }
 end
 
+---@private
 ---@param rowData {title: string|Widget[], contents: string|Widget[]?, link: string?, linkType: 'ref'|'github'}
 ---@return Widget
 function ValveOperationalRequirementsTable._makeTableRow(rowData)
@@ -285,6 +292,7 @@ function ValveOperationalRequirementsTable._makeTableRow(rowData)
 
 end
 
+---@private
 ---@param exceptions string?
 ---@return Widget?
 function ValveOperationalRequirementsTable._makeExceptionsExpansion(exceptions)
@@ -303,6 +311,7 @@ function ValveOperationalRequirementsTable._makeExceptionsExpansion(exceptions)
 -- return Collapsible{children = exceptions}
 end
 
+---@private
 ---@param additionalInfoJson string
 ---@return ValveOperationalRequirementsDataAdditionalInfo[]
 function ValveOperationalRequirementsTable._parseAdditionalInfo(additionalInfoJson)
@@ -324,6 +333,7 @@ function ValveOperationalRequirementsTable._parseAdditionalInfo(additionalInfoJs
 	end)
 end
 
+---@private
 ---@param additionalInfoItem ValveOperationalRequirementsDataAdditionalInfo
 ---@return string
 function ValveOperationalRequirementsTable._makeAdditionalInfoDisplay(additionalInfoItem)
@@ -334,12 +344,14 @@ function ValveOperationalRequirementsTable._makeAdditionalInfoDisplay(additional
 	return 'Announced on ' .. date
 end
 
+---@private
 ---@param additionalInfoItem ValveOperationalRequirementsDataAdditionalInfo
 ---@return Renderable?
 function ValveOperationalRequirementsTable._makeAdditionalInfoRef(additionalInfoItem)
 	return ValveOperationalRequirementsTable._makeRefIcon(additionalInfoItem.ref)
 end
 
+---@private
 ---@param args table
 ---@return ValveOperationalRequirementsData
 function ValveOperationalRequirementsTable._getData(args)
@@ -383,6 +395,7 @@ function ValveOperationalRequirementsTable._getData(args)
 	}
 end
 
+---@private
 ---@param data ValveOperationalRequirementsData
 function ValveOperationalRequirementsTable._storeLpdbData(data)
 	if Lpdb.isStorageDisabled() then

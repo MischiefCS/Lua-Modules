@@ -307,8 +307,6 @@ function ValveOperationalRequirementsTable._makeExceptionsExpansion(exceptions)
 		},
 		children = exceptions
 	}
--- if there is no need to make it left align and unbold you could just
--- return Collapsible{children = exceptions}
 end
 
 ---@private

@@ -247,7 +247,7 @@ return {
 	copy = 'fas fa-clone',
 	download = 'fas fa-download',
 
-	-- Usage: CounterStrike VRS
+	-- Usage: Github links
 	github = 'fab fa-github',
 
 	-- Usage: Dota2 Spellcard

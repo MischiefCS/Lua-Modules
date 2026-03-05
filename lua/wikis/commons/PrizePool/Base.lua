@@ -357,6 +357,30 @@ BasePrizePool.prizeTypes = {
 			end
 		end,
 	},
+	['PLAYER_SHARE'] = {
+		sortOrder = 55,
+
+		header = 'playershare',
+		headerParse = function (prizePool, input, context, index)
+			return {title = input or 'Player Share'}
+		end,
+		headerDisplay = function (data)
+			return TableCell{children = {data.title}}
+		end,
+
+		row = 'playershare',
+		rowParse = function (placement, input, context, index)
+			return BasePrizePool._parseInteger(input)
+		end,
+		rowDisplay = function (headerData, data)
+			if data > 0 then
+				return TableCell{children = {
+					Currency.display(BASE_CURRENCY, data,
+						{formatValue = true, formatPrecision = headerData.roundPrecision, displayCurrencyCode = false})
+				}}
+			end
+		end,
+	},
 	[PRIZE_TYPE_FREETEXT] = {
 		sortOrder = 60,
 
